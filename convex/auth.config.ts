@@ -1,6 +1,8 @@
 // Configures Clerk authentication for Convex
 // Connects to: Clerk (handles user login/signup) and validates JWT tokens
 // Used by: Convex to authenticate users across the app
+import {AuthConfig} from "convex/server"
+
 export default {
   providers: [
     {
@@ -9,4 +11,4 @@ export default {
       applicationID: "convex", // JWT template name from Clerk
     },
   ],
-};
+} satisfies AuthConfig;
