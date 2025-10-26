@@ -1,7 +1,8 @@
 "use client"; // Marks this as a client component (runs in browser, not server)
 
 import { ConvexReactClient } from "convex/react"; // Client for React apps
-import { ConvexProvider } from "convex/react"; // Provider component to share client with app
+import { ConvexProviderWithClerk} from "convex/react-clerk";
+import { useAuth } from "@clerk/nextjs";
 
 // Creates connection to Convex backend using your project URL from .env.local
 // The ! tells TypeScript "this env variable definitely exists"
@@ -14,5 +15,5 @@ export function ConvexClientProvider(
   { children }: { children: React.ReactNode } // Accepts child components to wrap
 ) {
   // Returns ConvexProvider wrapping all children, giving them access to Convex
-  return <ConvexProvider client={client}>{children}</ConvexProvider>;
+  return <ConvexProviderWithClerk client={client} useAuth={useAuth}>{children}</ConvexProviderWithClerk>;
 }

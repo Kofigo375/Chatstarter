@@ -1,6 +1,12 @@
 "use client"; // Runs in browser (needed for hooks and interactivity)
 
-import { useMutation, useQuery } from "convex/react"; // Hooks to interact with Convex
+import {
+  Authenticated,
+  Unauthenticated,
+  useMutation,
+  useQuery,
+} from "convex/react"; // Hooks to interact with Convex
+import { SignInButton } from "@clerk/nextjs"; // Clerk sign-in button component
 import { useState } from "react"; // React hook for managing component state
 import { api } from "../convex/_generated/api"; // Auto-generated API from Convex functions
 
@@ -25,30 +31,36 @@ export default function Home() {
   };
 
   return (
-    <div>
-      {/* Display all messages from database */}
-      {/* messages?.map uses optional chaining in case messages is undefined */}
-      {messages?.map((message, index) => (
-        <div key={index}>
-          {" "}
-          {/* Unique key for React rendering */}
-          <strong>{message.sender}</strong>: {message.content}
-        </div>
-      ))}
+    <>
+      {" "}
+      {/* React Fragment - wraps multiple elements without adding extra DOM node */}
+      {/* Show chat interface only if user is logged in */}
+      <Authenticated>
+        <div>
+          {/* Display all messages from database */}
+          {messages?.map((message, index) => (
+            <div key={index}>
+              <strong>{message.sender}</strong>: {message.content}
+            </div>
+          ))}
 
-      {/* Form to send new messages */}
-      <form onSubmit={handleSubmit}>
-        {" "}
-        {/* Calls handleSubmit on submit */}
-        <input
-          type="text"
-          name="message"
-          id="message"
-          value={input} // Controlled input: value from state
-          onChange={(e) => setInput(e.target.value)} // Update state on typing
-        />
-        <button type="submit">Send</button>
-      </form>
-    </div>
+          {/* Form to send new messages */}
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              name="message"
+              id="message"
+              value={input} // Controlled input: value from state
+              onChange={(e) => setInput(e.target.value)} // Update state on typing
+            />
+            <button type="submit">Send</button>
+          </form>
+        </div>
+      </Authenticated>
+      {/* Show sign-in button if user is not logged in */}
+      <Unauthenticated>
+        <SignInButton />
+      </Unauthenticated>
+    </>
   );
 }
