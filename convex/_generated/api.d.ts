@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as functions_http from "../functions/http.js";
 import type * as functions_message from "../functions/message.js";
 
 import type {
@@ -25,6 +26,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "functions/http": typeof functions_http;
   "functions/message": typeof functions_message;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
