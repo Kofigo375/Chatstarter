@@ -35,7 +35,6 @@ export default function Home() {
       {" "}
       {/* React Fragment - wraps multiple elements without adding extra DOM node */}
       {/* Show chat interface only if user is logged in */}
-      <Authenticated>
         <div>
           {/* Display all messages from database */}
           {messages?.map((message, index) => (
@@ -56,11 +55,7 @@ export default function Home() {
             <button type="submit">Send</button>
           </form>
         </div>
-      </Authenticated>
-      {/* Show sign-in button if user is not logged in */}
-      <Unauthenticated>
-        <SignInButton />
-      </Unauthenticated>
+
     </>
   );
 }
