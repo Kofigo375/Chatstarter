@@ -14,12 +14,19 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  Sidebar, // This is the Sidebar component from shadcn
+  Sidebar,
+  SidebarGroupLabel,
+  SidebarGroupAction,
+  SidebarFooter, // This is the Sidebar component from shadcn
 } from "@/components/ui/sidebar";
-import { RedirectToSignIn } from "@clerk/nextjs"; // Clerk component - redirects to sign-in page
-import { Authenticated, Unauthenticated } from "convex/react"; // Convex auth state components
-import { User2Icon } from "lucide-react";
+import { api } from "@/convex/_generated/api";
+import { RedirectToSignIn, SignOutButton } from "@clerk/nextjs"; // Clerk component - redirects to sign-in page
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Authenticated, Unauthenticated, useQuery } from "convex/react"; // Convex auth state components
+import { PlusIcon, User2Icon } from "lucide-react";
 import Link from "next/link"; // ✅Correct import for navigation
+import { DropdownMenu, DropdownMenuContent } from "@radix-ui/react-dropdown-menu";
+import { DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 // Layout component for all dashboard pages
 // Used by: All pages in app/(dashboard)/ folder automatically (Next.js convention)
@@ -50,6 +57,12 @@ export default function DashboardLayout({
 }
 
 function DashboardSidebar() {
+  const user = useQuery(api.functions.user.get);
+
+  if (!user) {
+    return null; // Or a loading state
+  }
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -59,15 +72,48 @@ function DashboardSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link href="/friends">
-                  <User2Icon />
-                  Friends
+                    <User2Icon />
+                    Friends
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Direct Messages</SidebarGroupLabel>
+            <SidebarGroupAction>
+              <PlusIcon />
+              <span className="sr-only">New Direct Message</span>
+            </SidebarGroupAction>
+          </SidebarGroup>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarGroup>
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                <SidebarMenuButton className="flex items-center">
+                <Avatar>
+                  <AvatarImage src={user.image} />
+                  <AvatarFallback>{user.username[0]}</AvatarFallback>
+                </Avatar>
+                <p>{user.username}</p>
+                </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem>
+                            <SignOutButton />
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+        </SidebarGroup>
+      </SidebarFooter>
     </Sidebar>
   );
 }
