@@ -16,10 +16,11 @@ const useTestUsers = () => {
   const user = useQuery(api.functions.user.get); // Fetches current authenticated user
 
   if (!user) {
-    return []; // Return empty array while loading
+      return []; // Array of 5 users for testing UI
   }
 
-  return [user, user, user, user, user]; // Array of 5 users for testing UI
+
+    return [user, user, user, user]; // Return empty array while loading
 };
 
 // Component to display pending friend requests
@@ -32,6 +33,9 @@ export function PendingFriendsList() {
       {" "}
       {/* Stack items vertically with dividers */}
       <h2 className="text-sm text-muted-foreground">Pending Friends</h2>
+      {users.length === 0 && (
+        <FriendsListEmpty>No pending friend requests.</FriendsListEmpty>
+      )}{" "}
       {users.map(
         (
           user,
@@ -42,20 +46,14 @@ export function PendingFriendsList() {
             username={user.username} // Pass username as prop
             image={user.image} // Pass image URL as prop
           >
-            <Button size="icon" variant="ghost">
-              {" "}
-              {/* Accept button */}
-              <CheckIcon className="text-green-600" /> {/* ✅ Green icon */}
-              <span className="sr-only">Accept</span>{" "}
-              {/* Hidden text for screen readers */}
-            </Button>
-            <Button size="icon" variant="ghost">
-              {" "}
-              {/* Reject button */}
-              <XIcon className="text-red-600" /> {/* ✅ Red icon */}
-              <span className="sr-only">Reject</span>{" "}
-              {/* Hidden text for screen readers */}
-            </Button>
+            <IconButton
+              title="Accept"
+              icon={<CheckIcon className="text-green-600" />} // ✅ Green icon
+            />
+            <IconButton
+              title="Reject"
+              icon={<XIcon className="text-red-600" />} // ✅ Red icon
+            />
           </FriendItem>
         )
       )}
@@ -71,6 +69,7 @@ export function AcceptedFriendsList() {
       {" "}
       {/* Stack items vertically with dividers */}
       <h2 className="text-sm text-muted-foreground">Accepted Friends</h2>
+      {users.length === 0 && <FriendsListEmpty>No friends yet.</FriendsListEmpty>}
       {users.map(
         (
           user,
@@ -99,6 +98,14 @@ export function AcceptedFriendsList() {
   );
 }
 
+
+function FriendsListEmpty({children}: {children?: React.ReactNode}) {
+  return (
+    <div className="p-4 bg-muted/50 text-center text-sm text-muted-foreground rounded-md">
+      {children}
+    </div>
+  )
+}
 
 function IconButton({
   title,
