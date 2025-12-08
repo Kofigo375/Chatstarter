@@ -1,4 +1,8 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
+import { AcceptedFriendsList, PendingFriendsList } from "./_components/friends-list";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 export default function FriendsPage() {
     return (
@@ -7,7 +11,12 @@ export default function FriendsPage() {
                 <h1 className="font-semibold">Friends</h1>
                 <Button>Add Friend</Button> 
             </header>
-            <div className="grid p-4 gap-4"></div>
+            <div className="grid p-4 gap-4">
+                <TooltipProvider delayDuration={0}>
+                    <PendingFriendsList />
+                    <AcceptedFriendsList />
+                </TooltipProvider>
+            </div>
         </div>
     );
 }
