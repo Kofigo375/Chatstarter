@@ -1,0 +1,36 @@
+// Helper Functions
+// Purpose: Reusable utilities for Convex functions
+// Connected to: All authenticated queries/mutations
+
+import { customCtx, customQuery } from "convex-helpers/server/customFunctions";
+import { query } from "../_generated/server"; 
+import { getCurrentUser } from "./user";
+
+// Authenticated Query Wrapper
+// Purpose: Automatically check if user is logged in before running query
+// Returns: Query builder with user context pre-loaded
+// Usage: Replace query() with authenticatedQuery() in your functions
+export const authenticatedQuery = customQuery(
+  query, // 
+  customCtx(async (ctx) => {
+    //
+    const user = await getCurrentUser(ctx); // Get current logged-in user
+    if (!user) {
+      throw new Error("Unauthorized"); // Reject if not logged in
+    }
+    return { user }; // Add user to context (available as ctx.user)
+  })
+);
+
+
+export const authenticatedMutation = customQuery(
+  query, // 
+  customCtx(async (ctx) => {
+    //
+    const user = await getCurrentUser(ctx); // Get current logged-in user
+    if (!user) {
+      throw new Error("Unauthorized"); // Reject if not logged in
+    }
+    return { user }; // Add user to context (available as ctx.user)
+  })
+);  
