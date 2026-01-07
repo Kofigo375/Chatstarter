@@ -20,34 +20,31 @@ import { useMutation } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-
-
-
 export function AddFriend() {
   const [open, setOpen] = useState(false); // Dialog open state
-  const createFriendRequest = useMutation(api.functions.friends.createRequest);
+  const createFriendRequest = useMutation(
+    api.functions.friends.createFriendRequest
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      await createFriendRequest({ username: e.currentTarget.username.value });
+      const username = e.currentTarget.username.value;
+      await createFriendRequest({ username });
       toast.success("Friend request sent!");
       setOpen(false); // Close dialog on success
-
-  } catch (error) {
-      toast.error("Error sending friend request:", 
-        { description: (error instanceof Error? error.message : "An unknown error occurred") });
+    } catch (error) {
+      toast.error("Error sending friend request:", {
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
     }
-
   };
-
-
-
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">Add Friend</Button> 
+        <Button size="sm">Add Friend</Button>
       </DialogTrigger>
 
       <DialogContent>

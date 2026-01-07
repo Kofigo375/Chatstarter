@@ -13,7 +13,9 @@ export default defineSchema({
     username: v.string(), // User's display name
     image: v.string(), // Profile picture URL
     clerkId: v.string(), // Unique ID from Clerk auth service
-  }).index("by_clerk_id", ["clerkId"]).index("by_username", ["username"]), // Fast lookups by Clerk ID
+  })
+    .index("by_clerk_id", ["clerkId"])
+    .index("by_username", ["username"]), // Fast lookups by Clerk ID
 
   // Friends table - tracks friendship relationships between users
   // Connected to: Friend requests, friends list display
@@ -28,7 +30,9 @@ export default defineSchema({
     ), // ✅ Closing parenthesis for v.union()
   })
     .index("by_user1", ["user1"]) // Index for fast queries: "Find all friends of user1"
-    .index("by_user2", ["user2"]), // Index for user2 lookups
+    .index("by_user2", ["user2"]) // Index for user2 lookups
+    .index("by_user1_status", ["user1", "status"]) // ✅ Add this
+    .index("by_user2_status", ["user2", "status"]), // ✅ Add this
 
   // Messages table - stores all chat messages
   // Connected to: convex/functions/message.ts (list and create functions)

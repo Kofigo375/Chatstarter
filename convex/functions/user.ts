@@ -9,16 +9,31 @@ import {
   query, // Function type: callable from client to fetch data
   QueryCtx, // TypeScript type for query context
 } from "../_generated/server"; // Auto-generated server types from Convex
-import { v } from "convex/values"; // Validator for type checking arguments
+import { v } from "convex/values";
 
 // Get current authenticated user
 // Called by: React components via useQuery(api.functions.user.get)
 // Connected to: Clerk authentication (gets user identity from auth token)
 // Returns: Current user's data from database or null if not authenticated
 // Used in: Components that need to display current user info (profile, settings, etc.)
+export const getCurrentUser = async (ctx: QueryCtx) => {
+  // ✅ Use Clerk's built-in method (not convex-dev/auth)
+  const identity = await ctx.auth.getUserIdentity();
+
+  if (!identity) {
+    return null;
+  }
+
+  // identity.subject is the Clerk user ID
+  return await ctx.db
+    .query("users")
+    .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+    .unique();
+};
+
+// This is the public query that uses getCurrentUser
 export const get = query({
   handler: async (ctx) => {
-    // Fetches authenticated user from database using helper function
     return await getCurrentUser(ctx);
   },
 });
@@ -82,24 +97,6 @@ export const remove = internalMutation({
     }
   },
 });
-
-// Helper function: Get current authenticated user from database
-// Used by: get query (line 16)
-// Purpose: Reusable logic to fetch authenticated user's data
-// Flow: Get auth identity → Extract Clerk ID → Query database
-const getCurrentUser = async (ctx: QueryCtx | MutationCtx) => {
-  // Get current authenticated user's identity from Clerk (via auth token)
-  // ctx.auth is provided by ConvexClientProvider wrapping your app
-  const identity = await ctx.auth.getUserIdentity();
-
-  if (!identity) {
-    return null; // No authenticated user (user not logged in)
-  }
-
-  // identity.subject = Clerk user ID (standard JWT claim)
-  // Find and return user from database using their Clerk ID
-  return await getUserByClerkId(ctx, identity.subject);
-};
 
 // Helper function: Find user in database by Clerk ID
 // Used by: getCurrentUser (line 78), remove mutation (line 70)
