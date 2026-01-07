@@ -7,8 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api"; // Auto-generated API from Convex
 import { Tooltip, TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
-import { useQuery } from "convex/react"; // Hook to fetch real-time data
+import { useMutation, useQuery } from "convex/react"; // Hook to fetch real-time data
 import { CheckIcon, MessageCircleCodeIcon, X, XIcon } from "lucide-react";
+import { use } from "react";
 
 // Hook to get test users (temporary - for development)
 // TODO: Replace with actual friends query when friend system is implemented
@@ -26,29 +27,34 @@ const useTestUsers = () => {
 // Component to display pending friend requests
 // Used in: page.tsx (Friends page)
 export function PendingFriendsList() {
-  const users = useTestUsers(); // Call custom hook to get user array
-
+  const friends = useQuery(api.functions.friends.listPending); // Fetch pending friends
+  const updateStatus = useMutation(api.functions.friends.updateStatus);
+    
+  
   return (
     <div className="flex flex-col divide-y">
       {" "}
       {/* Stack items vertically with dividers */}
       <h2 className="text-sm text-muted-foreground">Pending Friends</h2>
-      {users.length === 0 && (
+      {friends?.length === 0 && (
         <FriendsListEmpty>No pending friend requests.</FriendsListEmpty>
       )}{" "}
-      {users.map(
+      {friends.map(
         (
-          user,
+          friend,
           index // Loop through users array
         ) => (
           <FriendItem
             key={index} // Unique key for React list rendering
-            username={user.username} // Pass username as prop
-            image={user.image} // Pass image URL as prop
+            username={friend.user.username} // Pass username as prop
+            image={friend.user.image} // Pass image URL as prop
           >
             <IconButton
               title="Accept"
               icon={<CheckIcon className="text-green-600" />} // ✅ Green icon
+              onClick={() => {
+                updateStatus({id: friend._id, status: "accepted"});
+              }}
             />
             <IconButton
               title="Reject"
@@ -62,33 +68,38 @@ export function PendingFriendsList() {
 }
 
 export function AcceptedFriendsList() {
-  const users = useTestUsers(); // Call custom hook to get user array
+  const friends = useQuery(api.functions.friends.listAccepted); // Fetch accepted friends 
+  const updateStatus = useMutation(api.functions.friends.updateStatus);
 
   return (
     <div className="flex flex-col divide-y">
       {" "}
       {/* Stack items vertically with dividers */}
       <h2 className="text-sm text-muted-foreground">Accepted Friends</h2>
-      {users.length === 0 && <FriendsListEmpty>No friends yet.</FriendsListEmpty>}
-      {users.map(
+      {friends?.length === 0 && <FriendsListEmpty>No friends yet.</FriendsListEmpty>}
+      {friends.map(
         (
-          user,
+          friend,
           index // Loop through users array
         ) => (
           <FriendItem
             key={index} // Unique key for React list rendering
-            username={user.username} // Pass username as prop
-            image={user.image} // Pass image URL as prop
+            username={friend.user.username} // Pass username as prop
+            image={friend.user.image} // Pass image URL as prop
           >
             
            <IconButton
            title="Start DM"
             icon={<MessageCircleCodeIcon className="text-blue-600" />}
+            onClick={() => {}}
            /> 
 
           <IconButton
             title="Remove Friend"
             icon={<XIcon className="text-red-600" />}
+            onClick={() => {
+              updateStatus({id: friend._id, status: "rejected"});
+            }}
           />
           </FriendItem>
         )
@@ -110,16 +121,18 @@ function FriendsListEmpty({children}: {children?: React.ReactNode}) {
 function IconButton({
   title,
   classname,
-  icon
+  icon,
+  onClick
 }: {
   title: string;
   classname?: string;
   icon: React.ReactNode;
+  onClick?: () => void;
 }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button size="icon" variant="ghost" className={classname}>
+        <Button size="icon" variant="ghost" className={classname} onClick={onClick}>
           {icon}
           <span className="sr-only">{title}</span>
         </Button>

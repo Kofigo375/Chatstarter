@@ -13,7 +13,7 @@ export default defineSchema({
     username: v.string(), // User's display name
     image: v.string(), // Profile picture URL
     clerkId: v.string(), // Unique ID from Clerk auth service
-  }).index("by_clerk_id", ["clerkId"]), // Fast lookups by Clerk ID
+  }).index("by_clerk_id", ["clerkId"]).index("by_username", ["username"]), // Fast lookups by Clerk ID
 
   // Friends table - tracks friendship relationships between users
   // Connected to: Friend requests, friends list display
