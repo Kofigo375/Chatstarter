@@ -5,6 +5,7 @@
 
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { use } from "react";
 
 export default defineSchema({
   // Users table - stores registered user information
@@ -36,6 +37,15 @@ export default defineSchema({
 
   // Messages table - stores all chat messages
   // Connected to: convex/functions/message.ts (list and create functions)
+  directMessages: defineTable({}),
+  directMessageMembers: defineTable({
+    directMessage: v.id("directMessages"),
+    user: v.id("users"),
+  })
+    .index("by_direct_message", ["directMessage"])
+    .index("by_directMessage_user", ["directMessage", "user"])
+    .index("by_user", ["user"]),
+
   messages: defineTable({
     content: v.string(), // The message text
     sender: v.string(), // Who sent it (will link to users table later)
