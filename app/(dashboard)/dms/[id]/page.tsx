@@ -2,7 +2,7 @@
 
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { use, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -16,6 +16,7 @@ import { Doc, Id } from "@/convex/_generated/dataModel";
 import { FunctionReturnType } from "convex/server";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 // Page component for individual direct message thread
 // Used in: app/(dashboard)/dms/[id]/page.tsx
@@ -44,26 +45,30 @@ export default function MessagePage({
         <h1 className="font-semibold text-lg">{directMessage.user.username}</h1>
       </header>
       <ScrollArea className="h-full">
-        {messages?.map((message) => (<MessageItem key={message._id} message={message} />))}
+        {messages?.map((message) => (
+          <MessageItem key={message._id} message={message} />
+        ))}
       </ScrollArea>
-      <MessageInput directMessageId={id} />
+      <MessageInput directMessage={id} />
     </div>
   );
 }
 
 type Message = FunctionReturnType<typeof api.functions.message.list>[number];
 
-function MessageItem({message}: {message: Message}) {
+function MessageItem({ message }: { message: Message }) {
   const user = useQuery(api.functions.user.get);
 
   return (
-    <div className="flex items-center px-4 gap-2">
+    <div className="flex items-center px-4 gap-2 py-2">
       <Avatar className="size-8 border">
-        {message.sender &&<AvatarImage src={message.sender?.image} />}
+        {message.sender && <AvatarImage src={message.sender?.image} />}
         <AvatarFallback>{message.sender?.username[0]}</AvatarFallback>
       </Avatar>
       <div className="flex flex-col mr-auto">
-        <p className="text-xs text-muted-foreground">{message.sender?.username ?? "Deleted User"}</p>
+        <p className="text-xs text-muted-foreground">
+          {message.sender?.username ?? "Deleted User"}
+        </p>
         <p className="text-sm ">{message.content}</p>
       </div>
       <MessageAction message={message} />
@@ -71,10 +76,9 @@ function MessageItem({message}: {message: Message}) {
   );
 }
 
-function MessageAction({message}: {message: Message}) {
-
+function MessageAction({ message }: { message: Message }) {
   const user = useQuery(api.functions.user.get);
-  if (!user || message.sender?._id !== user._id)  {
+  if (!user || message.sender?._id !== user._id) {
     return null;
   }
 
@@ -94,18 +98,38 @@ function MessageAction({message}: {message: Message}) {
   );
 }
 
-function MessageInput({ directMessageId }: { directMessageId: Id<"directMessages"> }) {
+function MessageInput({
+  directMessage,
+}: {
+  directMessage: Id<"directMessages">;
+}) {
   const [content, setContent] = useState("");
-  
+  const sendMessage = useMutation(api.functions.message.create);
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      await sendMessage({ directMessage, content });
+      setContent("");
+    } catch (error) {
+      toast.error("Failed to Send Message", {
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
+    }
+  };
 
   return (
-    <div className="flex items-center p-4 gap-2">
-      <Input placeholder="Type your message.." value={content} onChange={(e) => setContent(e.target.value)} />
+    <form className="flex items-center p-4 gap-2" onSubmit={handleSubmit}>
+      <Input
+        placeholder="Type your message.."
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+      />
       <Button>
         <SendIcon />
         <span className="sr-only">Send </span>
       </Button>
-    </div>
+    </form>
   );
 }
