@@ -22,20 +22,12 @@ import Link from "next/link"; // Correct import for navigation
 import { NewDirectMessage } from "../new-direct-message";
 import { usePathname } from "next/navigation";
 
-const useTestDirectMessages = () => {
-  const user = useQuery(api.functions.user.get); // Fetches current authenticated user
 
-  if (!user) {
-    return []; // Array of 5 users for testing UI
-  }
-
-  return [user, user, user, user]; // Return empty array while loading
-}
 
 
 export function DashboardSidebar() {
   const user = useQuery(api.functions.user.get);
-  const directMessages = useTestDirectMessages();
+  const directMessages = useQuery(api.functions.dm.list);
   const pathname = usePathname();
 
   if (!user) {
@@ -63,15 +55,15 @@ export function DashboardSidebar() {
             <NewDirectMessage />
             <SidebarGroupContent>
               <SidebarMenu>
-                {directMessages.map((directMessage) =>  (
+                {directMessages?.map((directMessage) =>  (
                   <SidebarMenuItem key={directMessage._id}>
                     <SidebarMenuButton asChild isActive={pathname === `/dms/${directMessage._id}`}>
                       <Link href={`/dms/${directMessage._id}`}>  
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src={directMessage.image} />
-                        <AvatarFallback>{directMessage.username[0]}</AvatarFallback>
+                        <AvatarImage src={directMessage.user.image} />
+                        <AvatarFallback>{directMessage.user.username[0]}</AvatarFallback>
                       </Avatar>
-                      <p className="font-medium">{directMessage.username}</p>
+                      <p className="font-medium">{directMessage.user.username}</p>
                       </Link>
                     </SidebarMenuButton> 
                   </SidebarMenuItem>

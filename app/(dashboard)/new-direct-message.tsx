@@ -16,23 +16,25 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export function NewDirectMessage() {
 
   const [open, setOpen] = useState(false); // Dialog open state
-  const createFriendRequest = useMutation(
-    api.functions.friends.createFriendRequest
+  const createDirectMessage = useMutation(
+    api.functions.dm.create
   );
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const username = e.currentTarget.username.value;
-      await createFriendRequest({ username });
-      toast.success("Friend request sent!");
-      setOpen(false); // Close dialog on success
+      const id = await createDirectMessage({ username });
+      setOpen(false); 
+      router.push(`/dms/${id}`);
     } catch (error) {
-      toast.error("Error sending friend request:", {
+      toast.error("Failed to Create Direct Message", {
         description:
           error instanceof Error ? error.message : "An unknown error occurred",
       });
@@ -40,7 +42,7 @@ export function NewDirectMessage() {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <SidebarGroupAction>
           <PlusIcon />
@@ -54,7 +56,7 @@ export function NewDirectMessage() {
             Start a new direct message by entering a username.
           </DialogDescription>
         </DialogHeader>
-        <form className="contents">
+        <form className="contents" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-1">
             <Label htmlFor="username">Username</Label>
             <Input type="text" id="username" placeholder="Enter username" />
