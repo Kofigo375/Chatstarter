@@ -12,8 +12,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusIcon } from "lucide-react";
+import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { toast } from "sonner";
 
 export function NewDirectMessage() {
+
+  const [open, setOpen] = useState(false); // Dialog open state
+  const createFriendRequest = useMutation(
+    api.functions.friends.createFriendRequest
+  );
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const username = e.currentTarget.username.value;
+      await createFriendRequest({ username });
+      toast.success("Friend request sent!");
+      setOpen(false); // Close dialog on success
+    } catch (error) {
+      toast.error("Error sending friend request:", {
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
+    }
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>

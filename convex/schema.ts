@@ -47,7 +47,8 @@ export default defineSchema({
     .index("by_user", ["user"]),
 
   messages: defineTable({
+    sender: v.id("users"), // Who sent it (will link to users table later)
     content: v.string(), // The message text
-    sender: v.string(), // Who sent it (will link to users table later)
-  }),
+    directMessage: v.id("directMessages"), // Which DM this message belongs to
+  }).index("by_directMessage", ["directMessage"]),
 });
