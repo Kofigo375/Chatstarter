@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authenticatedMutation, authenticatedQuery } from "./helpers";
+import { internal } from "../_generated/api";
 
 // QUERY: Fetch all messages from database
 // Used by: React components to display chat messages (via useQuery hook)
@@ -66,6 +67,11 @@ export const create = authenticatedMutation({
       directMessage,
       sender: ctx.user._id,
     });
+    await ctx.scheduler.runAfter(0, internal.functions.typing.remove, {
+      directMessage,
+      user: ctx.user._id,
+    });
+
   },
 });
 

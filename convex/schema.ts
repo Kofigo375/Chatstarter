@@ -51,4 +51,10 @@ export default defineSchema({
     content: v.string(), // The message text
     directMessage: v.id("directMessages"), // Which DM this message belongs to
   }).index("by_directMessage", ["directMessage"]),
+  typingIndicators: defineTable({
+    user: v.id("users"),
+    directMessage: v.id("directMessages"),
+    expiresAt: v.number(),
+  }).index("by_directMessage", ["directMessage"])
+    .index("by_user_direct_message", ["user", "directMessage"])
 });
