@@ -3,7 +3,7 @@
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useMutation, useQuery } from "convex/react";
-import { use, useState } from "react";
+import { use, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
@@ -11,12 +11,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVerticalIcon, Send, SendIcon, TrashIcon } from "lucide-react";
+import {
+  MoreVerticalIcon,
+  Plus,
+  PlusIcon,
+  Send,
+  SendIcon,
+  TrashIcon,
+} from "lucide-react";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { FunctionReturnType } from "convex/server";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import Image from "next/image";
 
 // Page component for individual direct message thread
 // Used in: app/(dashboard)/dms/[id]/page.tsx
@@ -61,7 +69,7 @@ function TypingIndicator({
   directMessage: Id<"directMessages">;
 }) {
   const useernames = useQuery(api.functions.typing.list, { directMessage });
-  
+
   if (!useernames || useernames.length === 0) {
     return null;
   }
@@ -71,8 +79,6 @@ function TypingIndicator({
     </div>
   );
 }
-
-
 
 type Message = FunctionReturnType<typeof api.functions.message.list>[number];
 
@@ -90,6 +96,15 @@ function MessageItem({ message }: { message: Message }) {
           {message.sender?.username ?? "Deleted User"}
         </p>
         <p className="text-sm ">{message.content}</p>
+        {message.attachment && (
+          <Image
+            src={message.attachment}
+            alt="Attachment"
+            width={300}
+            height={300}
+            className="rounded border overflow-hidden mt-2"
+          />
+        )}
       </div>
       <MessageAction message={message} />
     </div>
@@ -111,8 +126,10 @@ function MessageAction({ message }: { message: Message }) {
         <span className="sr-only">Message Actions</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem className="text-red-600"
-         onClick={() => removeMutation({id: message._id})}>
+        <DropdownMenuItem
+          className="text-red-600"
+          onClick={() => removeMutation({ id: message._id })}
+        >
           <TrashIcon />
           Delete Message
         </DropdownMenuItem>
@@ -129,12 +146,30 @@ function MessageInput({
   const [content, setContent] = useState("");
   const sendMessage = useMutation(api.functions.message.create);
   const sendTypingIndicator = useMutation(api.functions.typing.upsert);
+  const generateUploadURL = useMutation(
+    api.functions.message.generateUploadURL
+  );
+  const [attachment, setAttachment] = useState<Id<"_storage">>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await generateUploadURL();
+    const res = await fetch(url, {
+      method: "POST",
+      body: file,
+    });
+    const { storageId } = (await res.json()) as { storageId: Id<"_storage"> };
+    setAttachment(storageId);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      await sendMessage({ directMessage, content });
+      await sendMessage({ directMessage, attachment, content });
       setContent("");
+      setAttachment(undefined);
     } catch (error) {
       toast.error("Failed to Send Message", {
         description:
@@ -144,21 +179,34 @@ function MessageInput({
   };
 
   return (
-    <form className="flex items-center p-4 gap-2" onSubmit={handleSubmit}>
-      <Input
-        placeholder="Type your message.."
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        onKeyDown={ e => {
-          if (content.length > 0) {
-            sendTypingIndicator({ directMessage });
-          }
-        }}
+    <>
+      <form className="flex items-center p-4 gap-2" onSubmit={handleSubmit}>
+        <Button size="icon" onClick={() => fileInputRef.current?.click()}>
+          <PlusIcon />
+          <span className="sr-only">Add Attachment</span>
+        </Button>
+
+        <Input
+          placeholder="Type your message.."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={(e) => {
+            if (content.length > 0) {
+              sendTypingIndicator({ directMessage });
+            }
+          }}
+        />
+        <Button>
+          <SendIcon />
+          <span className="sr-only">Send </span>
+        </Button>
+      </form>
+      <input
+        type="file"
+        className="hidden"
+        ref={fileInputRef}
+        onChange={handleImageUpload}
       />
-      <Button>
-        <SendIcon />
-        <span className="sr-only">Send </span>
-      </Button>
-    </form>
+    </>
   );
 }

@@ -50,6 +50,7 @@ export default defineSchema({
     sender: v.id("users"), // Who sent it (will link to users table later)
     content: v.string(), // The message text
     directMessage: v.id("directMessages"), // Which DM this message belongs to
+    attachment: v.optional(v.id("_storage")), // Optional attachment URL
   }).index("by_directMessage", ["directMessage"]),
   typingIndicators: defineTable({
     user: v.id("users"),
