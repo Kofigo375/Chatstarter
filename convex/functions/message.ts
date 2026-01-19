@@ -68,3 +68,18 @@ export const create = authenticatedMutation({
     });
   },
 });
+
+export const remove = authenticatedMutation({
+  args: {
+    id: v.id("messages"),
+  },
+  handler: async (ctx, { id }) => {
+    const message = await ctx.db.get(id);
+    if (!message) {
+      throw new Error("Message not found");
+    } else if (message.sender !== ctx.user._id) {
+      throw new Error("You are not the sender of this message");
+    }
+    await ctx.db.delete(id);
+  },
+});

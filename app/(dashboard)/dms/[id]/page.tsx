@@ -78,6 +78,8 @@ function MessageItem({ message }: { message: Message }) {
 
 function MessageAction({ message }: { message: Message }) {
   const user = useQuery(api.functions.user.get);
+  const removeMutation = useMutation(api.functions.message.remove);
+
   if (!user || message.sender?._id !== user._id) {
     return null;
   }
@@ -89,7 +91,8 @@ function MessageAction({ message }: { message: Message }) {
         <span className="sr-only">Message Actions</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem className="text-red-600">
+        <DropdownMenuItem className="text-red-600"
+         onClick={() => removeMutation({id: message._id})}>
           <TrashIcon />
           Delete Message
         </DropdownMenuItem>
