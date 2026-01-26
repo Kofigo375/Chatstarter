@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Loader,
   MoreVerticalIcon,
   Plus,
   PlusIcon,
@@ -44,7 +45,7 @@ export default function MessagePage({
   }
 
   return (
-    <div className="flex-1 flex-col flex divide-y max-h-screen">
+    <div className="flex flex-1 flex-col divide-y h-full overflow-hidden">
       <header className="flex items-center gap-2 p-4">
         <Avatar className="size-8 border">
           <AvatarImage src={directMessage.user.image} />
@@ -52,7 +53,7 @@ export default function MessagePage({
         </Avatar>
         <h1 className="font-semibold text-lg">{directMessage.user.username}</h1>
       </header>
-      <ScrollArea className="h-full">
+      <ScrollArea className="flex-1">
         {messages?.map((message) => (
           <MessageItem key={message._id} message={message} />
         ))}
@@ -150,18 +151,39 @@ function MessageInput({
     api.functions.message.generateUploadURL
   );
   const [attachment, setAttachment] = useState<Id<"_storage">>();
+  const [file, setFile] = useState<File>();
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const url = await generateUploadURL();
-    const res = await fetch(url, {
-      method: "POST",
-      body: file,
-    });
-    const { storageId } = (await res.json()) as { storageId: Id<"_storage"> };
-    setAttachment(storageId);
+    if (!file) {
+      return;
+    }
+
+    setFile(file);
+    setIsUploading(true);
+
+    try {
+      const url = await generateUploadURL();
+
+      const res = await fetch(url, {
+        method: "POST",
+        body: file,
+      });
+
+      if (!res.ok) {
+        throw new Error(`Upload failed: ${res.statusText}`);
+      }
+
+      const { storageId } = (await res.json()) as { storageId: Id<"_storage"> };
+      setAttachment(storageId);
+    } catch (error) {
+      toast.error("Failed to upload image");
+      setFile(undefined);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -170,6 +192,7 @@ function MessageInput({
       await sendMessage({ directMessage, attachment, content });
       setContent("");
       setAttachment(undefined);
+      setFile(undefined);
     } catch (error) {
       toast.error("Failed to Send Message", {
         description:
@@ -179,9 +202,22 @@ function MessageInput({
   };
 
   return (
-    <>
+    <div className="flex flex-col">
+      {file && <ImagePreview file={file} isUploading={isUploading} />}
       <form className="flex items-center p-4 gap-2" onSubmit={handleSubmit}>
-        <Button size="icon" onClick={() => fileInputRef.current?.click()}>
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+        />
+        <Button
+          type="button"
+          size="icon"
+          disabled={isUploading}
+          onClick={() => fileInputRef.current?.click()}
+        >
           <PlusIcon />
           <span className="sr-only">Add Attachment</span>
         </Button>
@@ -196,17 +232,36 @@ function MessageInput({
             }
           }}
         />
-        <Button>
+        <Button type="submit" disabled={isUploading}>
           <SendIcon />
-          <span className="sr-only">Send </span>
+          <span className="sr-only">Send</span>
         </Button>
       </form>
-      <input
-        type="file"
-        className="hidden"
-        ref={fileInputRef}
-        onChange={handleImageUpload}
+    </div>
+  );
+}
+
+function ImagePreview({
+  file,
+  isUploading,
+}: {
+  file: File;
+  isUploading: boolean;
+}) {
+  return (
+    <div className="relative px-4 py-2 max-h-40">
+      <Image
+        src={URL.createObjectURL(file)}
+        alt="Attachment Preview"
+        width={80}
+        height={80}
+        className="rounded border overflow-hidden object-cover"
       />
-    </>
+      {isUploading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded">
+          <Loader className="size-6 animate-spin text-white" />
+        </div>
+      )}
+    </div>
   );
 }
